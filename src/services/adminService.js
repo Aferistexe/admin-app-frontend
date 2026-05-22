@@ -3,7 +3,7 @@ import { sanitizeText, validateSteamId64, validateDiscordId } from '../utils/sec
 import { SENIOR_RANKS } from '../constants/adminConstants';
 import { AVAILABLE_RANKS } from '../constants/promotionConstants';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = 'https://admin.unionteams.ru/api';
 
 class AdminService {
   constructor() {
