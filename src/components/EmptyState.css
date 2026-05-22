@@ -1,0 +1,38 @@
+.empty-state-card {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state-card h3 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.empty-state-card p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.empty-state-button {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.empty-state-button:hover {
+  background-color: #1976D2;
+}
