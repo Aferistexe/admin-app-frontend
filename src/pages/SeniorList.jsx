@@ -32,8 +32,8 @@ function SeniorList() {
       setLoading(true);
       setError(null);
 
-      // Используем абсолютный URL публичного API
-      const response = await fetch('https://admin.unionteams.ru/api/v2/admins/list/4');
+      // Используем serverless функцию на Vercel как прокси
+      const response = await fetch('/api/proxy/api/v2/admins/list/4');
 
       if (!response.ok) {
         if (response.status === 401) {
