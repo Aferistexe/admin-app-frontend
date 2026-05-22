@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { sanitizeText } from '../utils/security';
 import { SENIOR_RANKS, STATUS_CLASSES } from '../constants/adminConstants';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -9,7 +8,6 @@ import './SeniorList.css';
 
 function SeniorList() {
   const navigate = useNavigate();
-  const { token } = useAuth();
   
   const [seniors, setSeniors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,12 +32,8 @@ function SeniorList() {
       setLoading(true);
       setError(null);
 
-      const headers = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch('/api/v2/admins/list/4', { headers });
+      // Используем абсолютный URL публичного API
+      const response = await fetch('https://admin.unionteams.ru/api/v2/admins/list/4');
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -76,7 +70,7 @@ function SeniorList() {
     } finally {
       setLoading(false);
     }
-  }, [token, isSeniorRank, hasTeam]);
+  }, [isSeniorRank, hasTeam]);
 
   useEffect(() => {
     fetchSeniors();
