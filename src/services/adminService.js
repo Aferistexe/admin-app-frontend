@@ -3,6 +3,7 @@ import { sanitizeText, validateSteamId64, validateDiscordId } from '../utils/sec
 import { SENIOR_RANKS } from '../constants/adminConstants';
 import { AVAILABLE_RANKS } from '../constants/promotionConstants';
 
+// ⚠️ ВАЖНО: URL для публичного API
 const API_BASE_URL = 'https://admin.unionteams.ru/api';
 
 class AdminService {
@@ -18,10 +19,11 @@ class AdminService {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        // Для публичного API не нужен токен
+        // const token = localStorage.getItem('token');
+        // if (token) {
+        //   config.headers.Authorization = `Bearer ${token}`;
+        // }
         return config;
       },
       (error) => Promise.reject(error)
@@ -40,12 +42,10 @@ class AdminService {
     );
   }
 
-  // Получение всех администраторов
-  async getAllAdmins(token) {
+  // Получение всех администраторов (без авторизации)
+  async getAllAdmins() {
     try {
-      const response = await this.client.get('/v2/admins/list/4', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await this.client.get('/v2/admins/list/4');
 
       if (!response.data || !Array.isArray(response.data)) {
         throw new Error('Некорректный формат данных от сервера');
@@ -59,29 +59,17 @@ class AdminService {
   }
 
   // Получение старших администраторов с командой
-  async getSeniorsWithTeam(token) {
+  async getSeniorsWithTeam() {
     try {
-      const allAdmins = await this.getAllAdmins(token);
+      const allAdmins = await this.getAllAdmins();
       
-      // Фильтруем старших администраторов с командой
       const seniorsWithTeam = allAdmins.filter(admin => {
-        if (!admin?.server?.rang || !admin?.steam?.steam64_id) {
-          return false;
-        }
-
-        if (!SENIOR_RANKS.includes(admin.server.rang)) {
-          return false;
-        }
-
-        if (!validateSteamId64(admin.steam.steam64_id)) {
-          return false;
-        }
+        if (!admin?.server?.rang || !admin?.steam?.steam64_id) return false;
+        if (!SENIOR_RANKS.includes(admin.server.rang)) return false;
+        if (!validateSteamId64(admin.steam.steam64_id)) return false;
 
         const hasTeam = allAdmins.some(member => {
-          if (!member?.server?.senior || !member?.steam?.steam64_id) {
-            return false;
-          }
-          
+          if (!member?.server?.senior || !member?.steam?.steam64_id) return false;
           return member.server.senior === admin.steam.steam64_id && 
                  member.steam.steam64_id !== admin.steam.steam64_id;
         });
@@ -96,32 +84,18 @@ class AdminService {
     }
   }
 
-  // ✅ НОВЫЙ МЕТОД: Получение администраторов для повышения
-  async getAdminsForPromotion(token) {
+  // Получение администраторов для повышения
+  async getAdminsForPromotion() {
     try {
-      const allAdmins = await this.getAllAdmins(token);
+      const allAdmins = await this.getAllAdmins();
       
-      // Фильтруем только тех, кого можно повысить
       const adminsForPromotion = allAdmins.filter(admin => {
-        // Проверка обязательных полей
-        if (!admin?._id || !admin?.server?.real_name || !admin?.server?.rang) {
-          return false;
-        }
-
-        // Проверка, что роль доступна для повышения
-        if (!AVAILABLE_RANKS.includes(admin.server.rang)) {
-          return false;
-        }
-
-        // Проверка Discord ID
-        if (!admin.links?.discord || !validateDiscordId(admin.links.discord)) {
-          return false;
-        }
-
+        if (!admin?._id || !admin?.server?.real_name || !admin?.server?.rang) return false;
+        if (!AVAILABLE_RANKS.includes(admin.server.rang)) return false;
+        if (!admin.links?.discord || !validateDiscordId(admin.links.discord)) return false;
         return true;
       });
 
-      // Сортировка по уровню роли (от низшей к высшей)
       const rankOrder = {
         'Стажер': 1,
         'Модератор': 2,
@@ -133,7 +107,6 @@ class AdminService {
         return (rankOrder[a.server.rang] || 0) - (rankOrder[b.server.rang] || 0);
       });
 
-      // Санитизация данных
       return this.sanitizeAdminsData(sortedAdmins);
     } catch (error) {
       console.error('AdminService.getAdminsForPromotion error:', error);
@@ -142,16 +115,13 @@ class AdminService {
   }
 
   // Получение данных команды
-  async getTeamData(seniorId, token) {
+  async getTeamData(seniorId) {
     try {
-      const allAdmins = await this.getAllAdmins(token);
+      const allAdmins = await this.getAllAdmins();
       
       const seniorAdmin = allAdmins.find(admin => admin._id === seniorId);
       
-      if (!seniorAdmin) {
-        throw new Error('Старший администратор не найден');
-      }
-
+      if (!seniorAdmin) throw new Error('Старший администратор не найден');
       if (!seniorAdmin.steam?.steam64_id || !validateSteamId64(seniorAdmin.steam.steam64_id)) {
         throw new Error('Некорректный SteamID64 старшего администратора');
       }
@@ -159,7 +129,6 @@ class AdminService {
       const members = allAdmins.filter(member => {
         if (!member.steam?.steam64_id || !member.server?.senior) return false;
         if (!validateSteamId64(member.steam.steam64_id)) return false;
-        
         return member.server.senior === seniorAdmin.steam.steam64_id && 
                member.steam.steam64_id !== seniorAdmin.steam.steam64_id;
       });
@@ -174,7 +143,6 @@ class AdminService {
     }
   }
 
-  // Вспомогательные методы
   sortByName(admins) {
     return [...admins].sort((a, b) => {
       const nameA = (a.server?.real_name || '').toLowerCase();
