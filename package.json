@@ -25,6 +25,7 @@
     "react-router-dom": "^7.15.1",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
+    "yaml": "^2.9.0",
     "yup": "^1.7.1"
   },
   "scripts": {
